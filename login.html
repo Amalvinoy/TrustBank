@@ -25,7 +25,7 @@
             <form id="login-form">
                 <!-- Username/Email Field -->
                 <div class="mb-4">
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email or Username</label>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Accound Number</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i class="fas fa-user text-gray-400"></i>
@@ -49,7 +49,7 @@
                 </div>
                 
                 <!-- Login Button -->
-                <button onclick="Validate()" type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300 font-medium flex items-center justify-center">
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300 font-medium flex items-center justify-center">
                     <span>Sign In</span>
                     <i class="fas fa-sign-in-alt ml-2"></i>
                 </button>
@@ -73,19 +73,21 @@
         </div>
     </div>
     
-    <script>
-    function Validate() {
-        const accnum2 = accnum.value
-        const password3 = password.value
+     <script>
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const accnum = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
         let users = JSON.parse(localStorage.getItem('bankUsers')) || [];
-        if (users.find(u => u.accnum2 === accnum2 && u.password3 === password3)) {
+        let user = users.find(u => u.accnum2 === accnum && u.password3 === password);
+        if (user) {
             localStorage.setItem('currentUser', JSON.stringify(user));
             alert('Login Successful');
             window.location.href = 'dashboard.html';
         } else {
             alert('Invalid Credentials');
         }
-    }
+    });
     </script>
 </body>
 </html>

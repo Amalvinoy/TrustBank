@@ -71,82 +71,59 @@
 </body>
 
 <script>
-// Load users and logged-in user
-let users = JSON.parse(localStorage.getItem('bankUsers')) || [];
-let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+const user = JSON.parse(localStorage.getItem('currentUser'));
+if (!user) window.location.href = 'login.html';
 
-// DOM elements
-const userNameSpan = document.getElementById('username');
+document.querySelector('span.text-blue-600').textContent = user.fullname || 'User';
 const balanceElem = document.getElementById('balance');
-const depositForm = document.getElementById('depositForm');
-const withdrawForm = document.getElementById('withdrawForm');
 const depositInput = document.getElementById('deposit-amount');
 const withdrawInput = document.getElementById('withdraw-amount');
-const transactionList = document.getElementById('transactions');
+const transactionList = document.querySelector('ul.divide-y');
 
-// Redirect if not logged in
-if (!currentUser) {
-    window.location.href = 'login.html';
+function showBalance() {
+    balanceElem.textContent = `$${user.balance ? user.balance.toFixed(2) : '0.00'}`;
 }
-
-// Update dashboard
-function updateDashboard() {
-    userNameSpan.textContent = currentUser.fullname;
-    balanceElem.textContent = `$${currentUser.balance.toFixed(2)}`;
-    renderTransactions();
-}
-
-// Show transactions
-function renderTransactions() {
-    transactionList.innerHTML = "";
-    if (!currentUser.transactions.length) {
-        transactionList.innerHTML = `<li class="py-2 text-gray-500 text-center">No transactions yet</li>`;
+function showTransactions() {
+    transactionList.innerHTML = '';
+    if (!user.transactions || user.transactions.length === 0) {
+        transactionList.innerHTML = '<li class="py-3 px-2 text-gray-500 text-center">No transactions yet</li>';
         return;
     }
-    currentUser.transactions.forEach(tx => {
-        transactionList.innerHTML += `
-            <li class="py-2 flex justify-between">
-                <span>${tx.date}</span>
-                <span class="${tx.type === 'deposit' ? 'text-green-600' : 'text-red-600'}">
-                    ${tx.type === 'deposit' ? '+' : '-'}$${tx.amount.toFixed(2)}
-                </span>
-            </li>`;
+    user.transactions.forEach(tx => {
+        transactionList.innerHTML += `<li class='py-3 px-2 flex justify-between items-center'><span class='text-gray-600'>${tx.date}</span><span class='${tx.type==='deposit'?'text-green-600':'text-red-600'} font-medium'>${tx.type==='deposit'?'+':'-'}$${tx.amount.toFixed(2)}</span></li>`;
     });
 }
-
-// Save user data
 function saveUser() {
-    users = users.map(u => u.accnum === currentUser.accnum ? currentUser : u);
+    let users = JSON.parse(localStorage.getItem('bankUsers')) || [];
+    let idx = users.findIndex(u => u.accnum === user.accnum);
+    if (idx !== -1) users[idx] = user;
     localStorage.setItem('bankUsers', JSON.stringify(users));
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.setItem('currentUser', JSON.stringify(user));
 }
-
-// Deposit
-depositForm.addEventListener('submit', e => {
-    e.preventDefault();
+function deposition() {
     const amount = parseFloat(depositInput.value);
-    if (!amount || amount <= 0) return alert("Enter valid amount");
-    currentUser.balance += amount;
-    currentUser.transactions.unshift({ type: "deposit", amount, date: new Date().toLocaleString() });
+    if (!amount || amount <= 0) return alert('Enter valid deposit amount');
+    user.balance = (user.balance || 0) + amount;
+    user.transactions = user.transactions || [];
+    user.transactions.unshift({type:'deposit',amount,date:new Date().toLocaleString()});
     saveUser();
-    depositInput.value = "";
-    updateDashboard();
-});
-
-// Withdraw
-withdrawForm.addEventListener('submit', e => {
-    e.preventDefault();
+    depositInput.value = '';
+    showBalance();
+    showTransactions();
+}
+function withdraw() {
     const amount = parseFloat(withdrawInput.value);
-    if (!amount || amount <= 0) return alert("Enter valid amount");
-    if (currentUser.balance < amount) return alert("Insufficient funds");
-    currentUser.balance -= amount;
-    currentUser.transactions.unshift({ type: "withdraw", amount, date: new Date().toLocaleString() });
+    if (!amount || amount <= 0) return alert('Enter valid withdraw amount');
+    if ((user.balance || 0) < amount) return alert('Insufficient funds');
+    user.balance -= amount;
+    user.transactions = user.transactions || [];
+    user.transactions.unshift({type:'withdraw',amount,date:new Date().toLocaleString()});
     saveUser();
-    withdrawInput.value = "";
-    updateDashboard();
-});
-
-// Init
-updateDashboard();
+    withdrawInput.value = '';
+    showBalance();
+    showTransactions();
+}
+showBalance();
+showTransactions();
 </script>
 </html>
