@@ -100,7 +100,7 @@
     }
         // Check for duplicate account number
     let users = JSON.parse(localStorage.getItem('bankUsers')) || [];
-    if (users.map(u => u.accnum2 === accnum2)) {
+    if (users.some(u => u.accnum2 === accnum2)) {
         alert('Account number already registered.');
         return;
     }
