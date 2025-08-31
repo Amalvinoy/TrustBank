@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TrustBank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
+    <nav class="bg-blue-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-landmark text-2xl"></i>
+                <span class="text-xl font-bold">TrustBank</span>
+            </div>
+            <div class="flex space-x-4">
+                <a href="index.html" class="bg-white text-blue-800 px-4 py-2 rounded-md font-medium hover:bg-blue-100 transition">Home</a>
+                <a href="login.html" class="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 transition">Logout</a>
+            </div>
+        </div>
+    </nav>
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Welcome, <span class="text-blue-600">User</span></h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Balance Box -->
+                <div class="bg-white rounded-lg shadow-md p-8 flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Account Balance</h3>
+                    <p id="balance" class="text-3xl font-bold text-blue-600">$0</p>
+                </div>
+                <!-- Deposit Box -->
+                <div class="bg-white rounded-lg shadow-md p-8 flex flex-col justify-center">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Deposit</h3>
+                    <form>
+                        <div class="mb-4">
+                            <label for="deposit-amount" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                            <input type="number" id="deposit-amount" name="deposit-amount" min="1" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Enter amount">
+                        </div>
+                        <button onclick="deposition()" type="button" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition font-medium">Deposit</button>
+                    </form>
+                </div>
+                <!-- Withdraw Box -->
+                <div class="bg-white rounded-lg shadow-md p-8 flex flex-col justify-center">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Withdraw</h3>
+                    <form>
+                        <div class="mb-4">
+                            <label for="withdraw-amount" class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                            <input type="number" id="withdraw-amount" name="withdraw-amount" min="1" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500" placeholder="Enter amount">
+                        </div>
+                        <button onclick="withdraw()" type="button" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition font-medium">Withdraw</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Transaction History</h3>
+            <ul class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                <li class="py-3 px-2 flex justify-between items-center">                  
+                    <span class="text-green-600 font-medium">+$500.00</span>
+                </li>
+                <li class="py-3 px-2 flex justify-between items-center">                    
+                    <span class="text-red-600 font-medium">-$200.00</span>
+                </li>
+                <li class="py-3 px-2 flex justify-between items-center">
+                    <span class="text-green-600 font-medium">+$100.00</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+
+<script>
+// Get logged-in user from localStorage
+const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+const users = JSON.parse(localStorage.getItem('bankUsers')) || [];
+
+// DOM elements
+const userNameSpan = document.querySelector('span.text-blue-600');
+const balanceElem = document.querySelector('.text-3xl.text-blue-600');
+const depositForm = document.querySelector('form input#deposit-amount').closest('form');
+const withdrawForm = document.querySelector('form input#withdraw-amount').closest('form');
+const depositInput = document.getElementById('deposit-amount');
+const withdrawInput = document.getElementById('withdraw-amount');
+const transactionList = document.querySelector('ul.divide-y');
+
+function updateDashboard() {
+    if (!currentUser) {
+        window.location.href = 'login.html';
+        return;
+    }
+    userNameSpan.textContent = currentUser.fullname || 'User';
+    balanceElem.textContent = `$${currentUser.balance ? currentUser.balance.toFixed(2) : '0.00'}`;
+    renderTransactions();
+}
+
+function renderTransactions() {
+    transactionList.innerHTML = '';
+    if (!currentUser.transactions || currentUser.transactions.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'py-3 px-2 text-gray-500 text-center';
+        li.textContent = 'No transactions yet';
+        transactionList.appendChild(li);
+        return;
+    }
+    currentUser.transactions.forEach(tx => {
+        const li = document.createElement('li');
+        li.className = 'py-3 px-2 flex justify-between items-center';
+        const dateSpan = document.createElement('span');
+        dateSpan.className = 'text-gray-600';
+        dateSpan.textContent = tx.date;
+        const amtSpan = document.createElement('span');
+        amtSpan.className = tx.type === 'deposit' ? 'text-green-600 font-medium' : 'text-red-600 font-medium';
+        amtSpan.textContent = `${tx.type === 'deposit' ? '+' : '-'}$${tx.amount.toFixed(2)}`;
+        li.appendChild(dateSpan);
+        li.appendChild(amtSpan);
+        transactionList.appendChild(li);
+    });
+}
+
+function saveUser() {
+    // Update user in users array
+    const idx = users.findIndex(u => u.accnum === currentUser.accnum);
+    if (idx !== -1) {
+        users[idx] = currentUser;
+        localStorage.setItem('bankUsers', JSON.stringify(users));
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }
+}
+
+depositForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const amount = parseFloat(depositInput.value);
+    if (isNaN(amount) || amount <= 0) {
+        alert('Enter a valid deposit amount');
+        return;
+    }
+    currentUser.balance = (currentUser.balance || 0) + amount;
+    currentUser.transactions = currentUser.transactions || [];
+    currentUser.transactions.unshift({
+        type: 'deposit',
+        amount,
+        date: new Date().toLocaleString()
+    });
+    saveUser();
+    depositInput.value = '';
+    updateDashboard();
+});
+
+withdrawForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const amount = parseFloat(withdrawInput.value);
+    if (isNaN(amount) || amount <= 0) {
+        alert('Enter a valid withdraw amount');
+        return;
+    }
+    if ((currentUser.balance || 0) < amount) {
+        alert('Insufficient funds');
+        return;
+    }
+    currentUser.balance -= amount;
+    currentUser.transactions = currentUser.transactions || [];
+    currentUser.transactions.unshift({
+        type: 'withdraw',
+        amount,
+        date: new Date().toLocaleString()
+    });
+    saveUser();
+    withdrawInput.value = '';
+    updateDashboard();
+});
+
+// Change buttons to submit type for forms
+const depositBtn = depositForm.querySelector('button');
+depositBtn.type = 'submit';
+const withdrawBtn = withdrawForm.querySelector('button');
+withdrawBtn.type = 'submit';
+
+updateDashboard();
+</script>
+</html>
